@@ -20,7 +20,7 @@ class RegistrationController {
 
     if (!req.userId) {
       return res
-        .status(400)
+        .status(401)
         .json({ error: 'Only admins can make an registration' });
     }
 
@@ -30,23 +30,34 @@ class RegistrationController {
     const parsedDate = startOfHour(parseISO(start_date));
 
     if (isBefore(parsedDate, new Date())) {
-      return res.status(401).json({ error: 'Past dates are not permitted' });
+      return res.status(400).json({ error: 'Past dates are not permitted' });
     }
 
     // check if student exists
     const student = await Student.findByPk(student_id);
     if (!student) {
-      return res.status(401).json({ error: 'Student does not exists' });
+      return res.status(400).json({ error: 'Student does not exists' });
     }
 
     // check if plan exists
     const plan = await Plan.findByPk(plan_id);
     if (!plan) {
-      return res.status(401).json({ error: 'Plan does not exists' });
+      return res.status(400).json({ error: 'Plan does not exists' });
     }
 
     const endDate = addMonths(parsedDate, plan.duration);
     const totalPrice = plan.duration * plan.price;
+
+    // check if registration exists
+    const registrationExists = await Registration.findOne({
+      where: {
+        student_id: student.id,
+      },
+    });
+
+    if (registrationExists) {
+      return res.status(400).json({ error: 'Registration already exists' });
+    }
 
     const registration = await Registration.create({
       ...req.body,
@@ -64,8 +75,12 @@ class RegistrationController {
   }
 
   async index(req, res) {
+    const { page = 1 } = req.query;
+
     const registrations = await Registration.findAll({
-      attributes: ['id', 'start_date', 'end_date', 'price'],
+      attributes: ['id', 'start_date', 'end_date', 'price', 'active'],
+      limit: 20,
+      offset: (page - 1) * 20,
       include: [
         {
           model: Student,
@@ -149,59 +164,3 @@ class RegistrationController {
 }
 
 export default new RegistrationController();
-
-/**
-import { parseISO, isBefore, addMonths } from 'date-fns';
-
-import Student from '../models/Student';
-import Plan from '../models/Plan';
-import Registration from '../models/Registration';
-
-import { storeSchema } from '../validations/Registration';
-
-class RegistrationController {
-  async store(req, res) {
-    try {
-      await storeSchema.validate(req.body);
-    } catch (err) {
-      return res.status(400).json({ error: 'Falha na validação dos campos' });
-    }
-
-    if (!req.userId) {
-      return res.status(401).json({ error: 'Usuário não autorizado' });
-    }
-
-    const { start_date, student_id, plan_id } = req.body;
-    const parsedStartDate = parseISO(start_date);
-
-    if (isBefore(parsedStartDate, new Date())) {
-      return res
-        .status(400)
-        .json({ error: 'Não é permitido fazer matricula em data passada' });
-    }
-
-    const student = await Student.findByPk(student_id);
-    if (!student) {
-      return res.status(400).json({ error: 'Aluno não encontrado' });
-    }
-
-    const plan = await Plan.findByPk(plan_id);
-    if (!plan) {
-      return res.status(400).json({ error: 'Plano não encontrado' });
-    }
-
-    const endDate = addMonths(parsedStartDate, plan.duration);
-    const TotalPrice = plan.price * plan.duration;
-
-    const registration = await Registration.create({
-      ...req.body,
-      end_date: endDate,
-      price: TotalPrice,
-    });
-
-    return res.json(registration);
-  }
-}
-
-export default new RegistrationController();
- */
