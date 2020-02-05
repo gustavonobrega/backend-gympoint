@@ -7,12 +7,13 @@ import Queue from '../../lib/Queue';
 class AnswerController {
   async index(req, res) {
     const { page = 1 } = req.query;
+    const pageLimit = 5;
 
-    const helpOrder = await HelpOrder.findAll({
+    const { rows: helpOrder, count } = await HelpOrder.findAndCountAll({
       where: { answer: null },
       attributes: ['id', 'question'],
-      limit: 20,
-      offset: (page - 1) * 20,
+      limit: pageLimit,
+      offset: (page - 1) * pageLimit,
       include: [
         {
           model: Student,
@@ -22,7 +23,7 @@ class AnswerController {
       ],
     });
 
-    return res.json(helpOrder);
+    return res.json({ helpOrder, lastPage: Math.ceil(count / pageLimit) });
   }
 
   async update(req, res) {

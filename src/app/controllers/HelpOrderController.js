@@ -36,8 +36,8 @@ class HelpOrderController {
         student_id: req.params.id,
       },
       attributes: ['id', 'question', 'answer', 'answer_at'],
-      limit: 20,
-      offset: (page - 1) * 20,
+      limit: 2,
+      offset: (page - 1) * 2,
       include: [
         {
           model: Student,

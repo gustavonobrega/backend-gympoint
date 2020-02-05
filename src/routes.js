@@ -35,11 +35,13 @@ routes.delete('/students/:id', StudentController.delete);
 routes.post('/plans', PlanController.store);
 routes.get('/plans', PlanController.index);
 routes.put('/plans/:id', PlanController.update);
+routes.get('/plans/:id', PlanController.show);
 routes.delete('/plans/:id', PlanController.delete);
 
 // Registrations
 routes.post('/registrations', RegistrationController.store);
 routes.get('/registrations', RegistrationController.index);
+routes.get('/registrations/:id', RegistrationController.show);
 routes.put('/registrations/:id', RegistrationController.update);
 routes.delete('/registrations/:id', RegistrationController.delete);
 

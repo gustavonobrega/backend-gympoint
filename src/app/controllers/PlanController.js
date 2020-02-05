@@ -34,13 +34,24 @@ class PlanController {
 
   async index(req, res) {
     const { page = 1 } = req.query;
+    const pageLimit = 5;
 
-    const plans = await Plan.findAll({
-      limit: 20,
-      offset: (page - 1) * 20,
+    const { rows: plans, count } = await Plan.findAndCountAll({
+      limit: pageLimit,
+      offset: (page - 1) * pageLimit,
     });
 
-    return res.json(plans);
+    return res.json({ plans, lastPage: Math.ceil(count / pageLimit) });
+  }
+
+  async show(req, res) {
+    const plan = await Plan.findByPk(req.params.id);
+
+    if (!plan) {
+      return res.status(400).json({ error: 'Plan does not exists!' });
+    }
+
+    return res.json(plan);
   }
 
   async update(req, res) {

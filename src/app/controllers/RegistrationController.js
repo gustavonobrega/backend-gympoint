@@ -76,11 +76,12 @@ class RegistrationController {
 
   async index(req, res) {
     const { page = 1 } = req.query;
+    const pageLimit = 5;
 
-    const registrations = await Registration.findAll({
+    const { rows: registrations, count } = await Registration.findAndCountAll({
       attributes: ['id', 'start_date', 'end_date', 'price', 'active'],
-      limit: 20,
-      offset: (page - 1) * 20,
+      limit: pageLimit,
+      offset: (page - 1) * pageLimit,
       include: [
         {
           model: Student,
@@ -95,7 +96,31 @@ class RegistrationController {
       ],
     });
 
-    return res.json(registrations);
+    return res.json({ registrations, lastPage: Math.ceil(count / pageLimit) });
+  }
+
+  async show(req, res) {
+    const registration = await Registration.findByPk(req.params.id, {
+      attributes: ['id', 'start_date', 'end_date', 'price', 'active'],
+      include: [
+        {
+          model: Student,
+          as: 'student',
+          attributes: ['id', 'name', 'email'],
+        },
+        {
+          model: Plan,
+          as: 'plan',
+          attributes: ['id', 'title', 'duration'],
+        },
+      ],
+    });
+
+    if (!registration) {
+      return res.status(400).json({ error: 'Registration does not exists!' });
+    }
+
+    return res.json(registration);
   }
 
   async update(req, res) {

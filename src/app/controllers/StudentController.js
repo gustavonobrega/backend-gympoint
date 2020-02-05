@@ -34,13 +34,16 @@ class StudentController {
   }
 
   async index(req, res) {
-    const { queryName } = req.query;
+    const { page = 1, queryName } = req.query;
+    const pageLimit = 5;
 
-    const students = await Student.findAll({
-      where: queryName ? { name: { [Op.like]: `%${queryName}%` } } : {},
+    const { rows: students, count } = await Student.findAndCountAll({
+      where: queryName ? { name: { [Op.iLike]: `%${queryName}%` } } : {},
+      limit: pageLimit,
+      offset: (page - 1) * pageLimit,
     });
 
-    return res.json(students);
+    return res.json({ students, lastPage: Math.ceil(count / pageLimit) });
   }
 
   async show(req, res) {
